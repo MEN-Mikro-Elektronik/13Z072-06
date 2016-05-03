@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="packagedesc.xsd">
+	<name>13z07206</name>
+	<description>MDIS5 driver package for MEN Z72 OneWireBus controller driver</description>
+	<date>2010-04-12</date>
+	<revision>1.3</revision>
+	<docroot>DRIVERS/MDIS_LL/Z072_OWB/DOC/html/index.html</docroot>
+	<modellist>
+		<model>
+			<hwname>16Z072_OWB</hwname>
+			<description>OWB controller in Chameleon FPGA</description>
+			<devnameprefix>OWB</devnameprefix>
+			<devtype>MDIS</devtype>
+			<autoid>
+				<chamunitid>0x36</chamunitid>
+				<chamv2id>72</chamv2id>
+			</autoid>
+			<bbslot>
+				<bbismodel>CHAMELEON</bbismodel>
+			</bbslot>
+			<bbslot>
+				<bbismodel>CHAMELEON_PCITBL</bbismodel>
+			</bbslot>
+		</model>
+	</modellist>
+	<settinglist>
+		<setting>
+			<name>AUTO_SKIPROM</name>
+			<description>perform skip ROM request if IDLE and a memory function is requested</description>
+			<type>U_INT32</type>
+			<defaultvalue>1</defaultvalue>
+			<choises>
+				<choise>
+					<value>1</value>
+					<description>enabled</description>
+				</choise>
+				<choise>
+					<value>0</value>
+					<description>disabled</description>
+				</choise>
+			</choises>
+		</setting>
+		<setting>
+			<name>IRQ_ENABLE</name>
+			<description>enable irq immediately after/at init</description>
+			<type>U_INT32</type>
+			<defaultvalue>0</defaultvalue>
+			<choises>
+				<choise>
+					<value>0</value>
+					<description>no, use polling mode</description>
+				</choise>
+				<choise>
+					<value>1</value>
+					<description>yes</description>
+				</choise>
+			</choises>
+		</setting>
+	</settinglist>
+	<swmodulelist>
+		<swmodule>
+			<name>z72</name>
+			<description>Driver for Z72_OWB</description>
+			<type>Low Level Driver</type>
+			<makefilepath>Z072_OWB/DRIVER/COM/driver.mak</makefilepath>
+		</swmodule>
+		<swmodule internal="false">
+			<name>z72_simp</name>
+			<description>Example program for Z072</description>
+			<type>Driver Specific Tool</type>
+			<makefilepath>Z072_OWB/EXAMPLE/Z72_SIMP/COM/program.mak</makefilepath>
+		</swmodule>
+	</swmodulelist>
+</package>

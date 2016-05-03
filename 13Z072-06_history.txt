@@ -1,0 +1,25 @@
+===== [ History of fileset ART/13Z072-06/13Z072-06 ] =====
+
+
+-----[ 1.3 ]-----
+[ 2010-04-12 14:23:30 by amorbach ]
+   R:  Errors and Improvements pending
+   M1: Defines for Z72_MODE, Z72_CRC_CHKEN removed
+   M2: document that "ROM Match" and "ROM Search" commands are not
+       (yet) supported
+   M3: Comment define Z72_ROM_SKIP
+
+-----[ 1.2 ]-----
+[ 2010-03-12 14:25:17 by amorbach ]
+R: Porting to MDIS5
+M: changed according to MDIS Porting Guide 0.8
+
+-----[ 1.1 ]-----
+[ 2006-06-08 17:59:11 by cs ]
+driver fixed: OSS_Delay was not called in polled mode before reading status
+z73_simp fixed: disable interrupts when reading in polled mode
+
+-----[ 1.0 ]-----
+[ 2006-06-02 16:41:02 by cs ]
+Initial Revision
+
