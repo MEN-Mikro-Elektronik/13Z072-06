@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 		char addrstr[20];
 
 		for(i=0; i < msgBlk.size; i++) {
-			sprintf(addrstr, "\n 0x%08X: ", i+Z72_SIMP_DS2502_MEMSTART);
+			sprintf(addrstr, "\n 0x%08lx: ", i+Z72_SIMP_DS2502_MEMSTART);
 			printf( "%s%02X ",
 					!(i%16) ? addrstr : (!(i%8)&&(i!=0)) ? " " : "",
 					*(memData+i));
