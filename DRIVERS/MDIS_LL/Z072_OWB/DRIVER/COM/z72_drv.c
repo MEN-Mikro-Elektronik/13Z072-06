@@ -32,6 +32,8 @@
 
 #include "z72_drv_int.h"	/* Z72 driver internal header file */
 
+static const char IdentString[]=MENT_XSTR(MAK_REVISION);
+
 /*-----------------------------------------+
 |  DEFINES                                 |
 +-----------------------------------------*/
@@ -772,7 +774,7 @@ static int32 Z72_Info(
  */
 static char* Ident( void )
 {
-	return( "Z72 - Z72 low-level driver: $Id: z72_drv.c,v 1.3 2010/03/12 14:20:32 amorbach Exp $" );
+	return( (char*) IdentString );
 }
 
 /********************************* Cleanup *********************************/
