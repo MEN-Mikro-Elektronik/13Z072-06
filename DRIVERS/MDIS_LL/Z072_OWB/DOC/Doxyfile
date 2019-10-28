@@ -1,0 +1,22 @@
+@INCLUDE_PATH = $(MEN_DOXYGENTMPL)
+@INCLUDE = DoxyfileCommon
+
+#MDIS_COMMIT=6c19698c24718fc4fe8992ab86ea5c1e82ea294a
+
+PROJECT_NAME           = "Z72 MDIS Driver"
+INPUT                  = ../DRIVER/COM
+
+EXAMPLE_RECURSIVE      = YES
+EXAMPLE_PATH           = ../EXAMPLE/Z72_SIMP/COM
+
+OUTPUT_DIRECTORY       = .
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+GENERATE_HTMLHELP      = YES
+WARNINGS               = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_UNDOCUMENTED   = YES
+GENERATE_HTMLHELP      = YES
+SOURCE_BROWSER         = YES
+TAGFILES               = ../../../../LIBSRC/MDIS_API/DOC/mdis_api.tag=../../../../../LIBSRC/MDIS_API/DOC/html
+GENERATE_TAGFILE       = z72_driver.tag
