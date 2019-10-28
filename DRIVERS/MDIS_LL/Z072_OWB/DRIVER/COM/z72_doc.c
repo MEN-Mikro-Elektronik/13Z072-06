@@ -128,24 +128,6 @@
     </tr>
     </table>
 
-    \subsection z72_min   Minimum descriptor
-    z72_min.dsc
-    Demonstrates the minimum set of options necessary for using the driver.
-
-    \subsection z72_max   Maximum descriptor
-    z72_max.dsc
-    Shows all possible configuration options for this driver.
-
-    \subsection z72_sw_min   Minimum descriptor (swapped variant)
-    z72_sw_min.dsc
-    Demonstrates the minimum set of options necessary for using the swapped
-    variant of this driver.
-
-    \subsection z72_sw_max   Maximum descriptor (swapped variant)
-    z72_sw_max.dsc
-    Shows all possible configuration options for the swapped variant of this
-    driver.
-
     \n \section codes Z72 specific Getstat/Setstat codes
     see \ref getstat_setstat_codes "section about Getstat/Setstat codes"
 
@@ -170,10 +152,6 @@
 */
 
 /** \example z72_simp.c */
-/** \example z72_min.dsc */
-/** \example z72_max.dsc */
-/** \example z72_sw_min.dsc */
-/** \example z72_sw_max.dsc */
 
 /*! \page dummy
   \menimages
