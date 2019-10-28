@@ -11,20 +11,7 @@
  *     Required: OSS, DESC, DBG, ID libraries
  *
  *     \switches _ONE_NAMESPACE_PER_DRIVER_
- */
- /*-------------------------------[ History ]--------------------------------
  *
- * $Log: z72_drv.c,v $
- * Revision 1.3  2010/03/12 14:20:32  amorbach
- * R: Porting to MDIS5
- * M: changed according to MDIS Porting Guide 0.8
- *
- * Revision 1.2  2006/06/08 17:54:51  cs
- * fixed: OSS_Delay was not called in polled mode before reading status
- * cosmetics
- *
- * Revision 1.1  2006/06/02 16:40:13  cs
- * Initial Revision
  *
  *---------------------------------------------------------------------------
  * (c) Copyright 2010 by MEN Mikro Elektronik GmbH, Nuremberg, Germany

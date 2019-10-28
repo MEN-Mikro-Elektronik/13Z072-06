@@ -6,12 +6,6 @@
 #
 #    Description: Makefile definitions for the Z72 example program
 #
-#---------------------------------[ History ]---------------------------------
-#
-#   $Log: program.mak,v $
-#   Revision 1.1  2006/06/02 16:40:24  cs
-#   Initial Revision
-#
 #-----------------------------------------------------------------------------
 #   (c) Copyright 2006 by MEN Mikro Elektronik GmbH, Nuremberg, Germany
 #*****************************************************************************

@@ -12,23 +12,7 @@
  *
  *    \switches  _ONE_NAMESPACE_PER_DRIVER_
  *               _LL_DRV_
- */
- /*-------------------------------[ History ]--------------------------------
  *
- * $Log: z72_drv.h,v $
- * Revision 3.3  2010/04/12 14:04:37  amorbach
- * R:  Errors and Improvements pending
- * M1: Defines for Z72_MODE, Z72_CRC_CHKEN removed
- * M2: document that "ROM Match" and "ROM Search" commands are not
- * (yet) supported
- * M2: Comment define Z72_ROM_SKIP
- *
- * Revision 3.2  2010/03/12 14:20:46  amorbach
- * R: 1.Porting to MDIS5
- * M: 1.changed according to MDIS Porting Guide 0.8
- *
- * Revision 3.1  2006/06/02 16:40:25  cs
- * Initial Revision
  *
  *---------------------------------------------------------------------------
  * (c) Copyright 2010 by MEN Mikro Elektronik GmbH, Nuremberg, Germany

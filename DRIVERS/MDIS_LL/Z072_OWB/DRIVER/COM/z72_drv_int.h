@@ -10,12 +10,7 @@
  *               defines and forward declarations
  *
  *    \switches
- */
- /*-------------------------------[ History ]--------------------------------
  *
- * $Log: z72_drv_int.h,v $
- * Revision 1.1  2006/06/02 16:40:14  cs
- * Initial Revision
  *
  *---------------------------------------------------------------------------
  * (c) Copyright 2006 by MEN Mikro Elektronik GmbH, Nuremberg, Germany
