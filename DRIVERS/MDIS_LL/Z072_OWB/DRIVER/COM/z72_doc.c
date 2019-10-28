@@ -3,8 +3,6 @@
  *        \file  z72_doc.c
  *
  *      \author  cs
- *        $Date: 2006/06/02 16:40:15 $
- *    $Revision: 1.1 $
  *
  *      \brief   User documentation for Z72_OWB module driver
  *

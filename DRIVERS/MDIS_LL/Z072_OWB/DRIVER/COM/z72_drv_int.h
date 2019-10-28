@@ -3,8 +3,6 @@
  *        \file  z72_drv_int.h
  *
  *      \author  cs
- *        $Date: 2006/06/02 16:40:14 $
- *    $Revision: 1.1 $
  *
  *       \brief  Internal header file for Z72_OWB driver containing
  *               defines and forward declarations

@@ -6,8 +6,6 @@
 /*!
  *         \file z72_simp.c
  *       \author cs
- *        $Date: 2010/03/12 14:20:43 $
- *    $Revision: 1.3 $
  *
  *       \brief  Simple example program for the Z72 driver
  *
@@ -36,7 +34,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-static const char RCSid[]="$Id: z72_simp.c,v 1.3 2010/03/12 14:20:43 amorbach Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +45,8 @@ static const char RCSid[]="$Id: z72_simp.c,v 1.3 2010/03/12 14:20:43 amorbach Ex
 #include <MEN/mdis_err.h>
 #include <MEN/mdis_api.h>
 #include <MEN/z72_drv.h>
+
+static const char IdentString[]=MENT_XSTR(MAK_REVISION);
 
 /*--------------------------------------+
 |   DEFINES                             |

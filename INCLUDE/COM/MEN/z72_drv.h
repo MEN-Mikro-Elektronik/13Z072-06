@@ -3,8 +3,6 @@
  *        \file  z72_drv.h
  *
  *      \author  cs
- *        $Date: 2010/04/12 14:04:37 $
- *    $Revision: 3.3 $
  *
  *       \brief  Header file for Z72_OWB driver containing
  *               Z72 specific status codes and

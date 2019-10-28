@@ -3,8 +3,6 @@
  *        \file  z72_drv.c
  *
  *      \author  cs
- *        $Date: 2010/03/12 14:20:32 $
- *    $Revision: 1.3 $
  *
  *      \brief   Low-level driver for Z72_OWB module
  *

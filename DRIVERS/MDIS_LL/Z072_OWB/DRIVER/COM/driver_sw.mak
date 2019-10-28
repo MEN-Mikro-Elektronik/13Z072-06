@@ -1,8 +1,6 @@
 #***************************  M a k e f i l e  *******************************
 #
 #         Author: cs
-#          $Date: 2006/06/02 16:40:17 $
-#      $Revision: 1.1 $
 #
 #    Description: Makefile definitions for the Z72 driver, swapped variant
 #
@@ -23,8 +21,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 MAK_NAME=z72_sw
+# the next line is updated during the MDIS installation
+STAMPED_REVISION="13Z072_01_04-2-g6dcfece-dirty_2019-10-28"
+
+DEF_REVISION=MAK_REVISION=$(STAMPED_REVISION)
 
 MAK_SWITCH=$(SW_PREFIX)MAC_MEM_MAPPED \
+		$(SW_PREFIX)$(DEF_REVISION) \
            $(SW_PREFIX)MAC_BYTESWAP   \
            $(SW_PREFIX)Z72_SW
 
