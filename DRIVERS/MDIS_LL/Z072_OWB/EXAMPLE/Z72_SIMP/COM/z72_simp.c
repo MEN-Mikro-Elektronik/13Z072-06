@@ -111,6 +111,8 @@ int main(int argc, char *argv[])
 				"                 1: polled mode\n"
 
 				"\n");
+		printf( "Copyright 2010-2019, MEN Mikro Elektronik GmbH\n" );
+		printf( "%s\n", IdentString );
 		return(1);
 	}
 
