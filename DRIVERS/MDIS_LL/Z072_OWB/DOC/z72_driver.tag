@@ -17,146 +17,152 @@
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Init</name>
-      <anchor>a0</anchor>
+      <anchor>a1</anchor>
       <arglist>(DESC_SPEC *descSpec, OSS_HANDLE *osHdl, MACCESS *ma, OSS_SEM_HANDLE *devSemHdl, OSS_IRQ_HANDLE *irqHdl, LL_HANDLE **llHdlP)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Exit</name>
-      <anchor>a1</anchor>
+      <anchor>a2</anchor>
       <arglist>(LL_HANDLE **llHdlP)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Read</name>
-      <anchor>a2</anchor>
+      <anchor>a3</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, int32 *value)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Write</name>
-      <anchor>a3</anchor>
+      <anchor>a4</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, int32 value)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_SetStat</name>
-      <anchor>a4</anchor>
+      <anchor>a5</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, int32 code, INT32_OR_64 value32_or_64)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_GetStat</name>
-      <anchor>a5</anchor>
+      <anchor>a6</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, int32 code, INT32_OR_64 *value32_or_64P)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_BlockRead</name>
-      <anchor>a6</anchor>
+      <anchor>a7</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, void *buf, int32 size, int32 *nbrRdBytesP)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_BlockWrite</name>
-      <anchor>a7</anchor>
+      <anchor>a8</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 ch, void *buf, int32 size, int32 *nbrWrBytesP)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Irq</name>
-      <anchor>a8</anchor>
+      <anchor>a9</anchor>
       <arglist>(LL_HANDLE *llHdl)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Z72_Info</name>
-      <anchor>a9</anchor>
+      <anchor>a10</anchor>
       <arglist>(int32 infoType,...)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>char *</type>
       <name>Ident</name>
-      <anchor>a10</anchor>
+      <anchor>a11</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>Cleanup</name>
-      <anchor>a11</anchor>
+      <anchor>a12</anchor>
       <arglist>(LL_HANDLE *llHdl, int32 retCode)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>readRom</name>
-      <anchor>a12</anchor>
+      <anchor>a13</anchor>
       <arglist>(LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>skipRom</name>
-      <anchor>a13</anchor>
+      <anchor>a14</anchor>
       <arglist>(LL_HANDLE *llHdl)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>readMemory</name>
-      <anchor>a14</anchor>
+      <anchor>a15</anchor>
       <arglist>(LL_HANDLE *llHdl, u_int32 majState, u_int8 *buf, u_int16 size, u_int16 offs)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
       <name>masterTxReset</name>
-      <anchor>a15</anchor>
-      <arglist>(LL_HANDLE *llHdl)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>int32</type>
-      <name>waitOnReady</name>
       <anchor>a16</anchor>
       <arglist>(LL_HANDLE *llHdl)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
-      <name>getDevError</name>
+      <name>waitOnReady</name>
       <anchor>a17</anchor>
       <arglist>(LL_HANDLE *llHdl)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>int32</type>
-      <name>execCmd</name>
+      <name>getDevError</name>
       <anchor>a18</anchor>
+      <arglist>(LL_HANDLE *llHdl)</arglist>
+    </member>
+    <member kind="function" static="yes">
+      <type>int32</type>
+      <name>execCmd</name>
+      <anchor>a19</anchor>
       <arglist>(LL_HANDLE *llHdl, u_int8 *data, u_int32 cmd)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>void</type>
       <name>byteCrc</name>
-      <anchor>a19</anchor>
+      <anchor>a20</anchor>
       <arglist>(u_int8 *crc, u_int8 c)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>void</type>
       <name>byteCrcFinish</name>
-      <anchor>a20</anchor>
+      <anchor>a21</anchor>
       <arglist>(u_int8 *crc)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>u_int8</type>
       <name>bufCrc8</name>
-      <anchor>a21</anchor>
+      <anchor>a22</anchor>
       <arglist>(u_int8 crcStart, u_int8 *p, u_int32 len)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>Z72_GetEntry</name>
-      <anchor>a22</anchor>
+      <anchor>a23</anchor>
       <arglist>(LL_ENTRY *drvP)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>u_int8</type>
       <name>reflectByte</name>
-      <anchor>a23</anchor>
+      <anchor>a24</anchor>
       <arglist>(u_int8 c)</arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>const char</type>
+      <name>IdentString</name>
+      <anchor>a0</anchor>
+      <arglist>[]</arglist>
     </member>
   </compound>
   <compound kind="file">

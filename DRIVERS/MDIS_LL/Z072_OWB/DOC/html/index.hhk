@@ -34,15 +34,15 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="bufCrc8"><param name="Name" value="bufCrc8"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a21"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a22"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="byteCrc"><param name="Name" value="byteCrc"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a19"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a20"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="byteCrcFinish"><param name="Name" value="byteCrcFinish"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a20"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a21"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="CH_NUMBER"><param name="Name" value="CH_NUMBER"></OBJECT>
   <UL>
@@ -50,7 +50,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Cleanup"><param name="Name" value="Cleanup"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a11"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a12"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="dataP"><param name="Name" value="dataP"></OBJECT>
   <UL>
@@ -82,7 +82,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="execCmd"><param name="Name" value="execCmd"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a18"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a19"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="exeSem"><param name="Name" value="exeSem"></OBJECT>
   <UL>
@@ -98,11 +98,15 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="getDevError"><param name="Name" value="getDevError"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a17"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a18"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Ident"><param name="Name" value="Ident"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a10"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a11"><param name="Name" value="z72_drv.c"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="See Also" value="IdentString"><param name="Name" value="IdentString"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a0"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="idFuncTbl"><param name="Name" value="idFuncTbl"></OBJECT>
   <UL>
@@ -145,7 +149,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="masterTxReset"><param name="Name" value="masterTxReset"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a15"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a16"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="memAlloc"><param name="Name" value="memAlloc"></OBJECT>
   <UL>
@@ -165,19 +169,19 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="readMemory"><param name="Name" value="readMemory"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a14"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a15"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="readRom"><param name="Name" value="readRom"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a12"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a13"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="reflectByte"><param name="Name" value="reflectByte"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a23"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a24"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="skipRom"><param name="Name" value="skipRom"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a13"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a14"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="USE_IRQ"><param name="Name" value="USE_IRQ"></OBJECT>
   <UL>
@@ -185,15 +189,15 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="waitOnReady"><param name="Name" value="waitOnReady"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a16"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a17"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_BlockRead"><param name="Name" value="Z72_BlockRead"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a6"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a7"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_BlockWrite"><param name="Name" value="Z72_BlockWrite"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a7"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a8"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_CTL_CMD_MASK"><param name="Name" value="Z72_CTL_CMD_MASK"></OBJECT>
   <UL>
@@ -237,30 +241,31 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html"><param name="Name" value="z72_drv.c"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a21"><param name="Name" value="bufCrc8"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a19"><param name="Name" value="byteCrc"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a20"><param name="Name" value="byteCrcFinish"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a11"><param name="Name" value="Cleanup"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a18"><param name="Name" value="execCmd"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a17"><param name="Name" value="getDevError"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a10"><param name="Name" value="Ident"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a15"><param name="Name" value="masterTxReset"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a14"><param name="Name" value="readMemory"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a12"><param name="Name" value="readRom"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a23"><param name="Name" value="reflectByte"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a13"><param name="Name" value="skipRom"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a16"><param name="Name" value="waitOnReady"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a6"><param name="Name" value="Z72_BlockRead"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a7"><param name="Name" value="Z72_BlockWrite"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a1"><param name="Name" value="Z72_Exit"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a22"><param name="Name" value="Z72_GetEntry"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a5"><param name="Name" value="Z72_GetStat"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a9"><param name="Name" value="Z72_Info"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a0"><param name="Name" value="Z72_Init"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a8"><param name="Name" value="Z72_Irq"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a2"><param name="Name" value="Z72_Read"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a4"><param name="Name" value="Z72_SetStat"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a3"><param name="Name" value="Z72_Write"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a22"><param name="Name" value="bufCrc8"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a20"><param name="Name" value="byteCrc"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a21"><param name="Name" value="byteCrcFinish"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a12"><param name="Name" value="Cleanup"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a19"><param name="Name" value="execCmd"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a18"><param name="Name" value="getDevError"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a11"><param name="Name" value="Ident"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a0"><param name="Name" value="IdentString"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a16"><param name="Name" value="masterTxReset"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a15"><param name="Name" value="readMemory"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a13"><param name="Name" value="readRom"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a24"><param name="Name" value="reflectByte"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a14"><param name="Name" value="skipRom"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a17"><param name="Name" value="waitOnReady"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a7"><param name="Name" value="Z72_BlockRead"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a8"><param name="Name" value="Z72_BlockWrite"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a2"><param name="Name" value="Z72_Exit"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a23"><param name="Name" value="Z72_GetEntry"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a6"><param name="Name" value="Z72_GetStat"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a10"><param name="Name" value="Z72_Info"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a1"><param name="Name" value="Z72_Init"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a9"><param name="Name" value="Z72_Irq"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a3"><param name="Name" value="Z72_Read"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a5"><param name="Name" value="Z72_SetStat"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a4"><param name="Name" value="Z72_Write"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv__int_8h.html"><param name="Name" value="z72_drv_int.h"></OBJECT>
   <UL>
@@ -333,7 +338,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Exit"><param name="Name" value="Z72_Exit"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a1"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a2"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_EXTRADBG"><param name="Name" value="Z72_EXTRADBG"></OBJECT>
   <UL>
@@ -341,23 +346,23 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_GetEntry"><param name="Name" value="Z72_GetEntry"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a22"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a23"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_GetStat"><param name="Name" value="Z72_GetStat"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a5"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a6"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Info"><param name="Name" value="Z72_Info"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a9"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a10"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Init"><param name="Name" value="Z72_Init"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a0"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a1"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Irq"><param name="Name" value="Z72_Irq"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a8"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a9"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_MODE_AUTO_SKIPROM"><param name="Name" value="Z72_MODE_AUTO_SKIPROM"></OBJECT>
   <UL>
@@ -429,7 +434,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Read"><param name="Name" value="Z72_Read"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a2"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a3"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_REG_CTL"><param name="Name" value="Z72_REG_CTL"></OBJECT>
   <UL>
@@ -457,7 +462,7 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_SetStat"><param name="Name" value="Z72_SetStat"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a4"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a5"><param name="Name" value="z72_drv.c"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_ST_MAJ_END"><param name="Name" value="Z72_ST_MAJ_END"></OBJECT>
   <UL>
@@ -609,5 +614,5 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="See Also" value="Z72_Write"><param name="Name" value="Z72_Write"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a3"><param name="Name" value="z72_drv.c"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="z72__drv_8c.html#a4"><param name="Name" value="z72_drv.c"></OBJECT>
 </UL>

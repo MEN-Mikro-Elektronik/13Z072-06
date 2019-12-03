@@ -31,6 +31,7 @@ modules.html
 examples.html
 globals.html
 globals_func.html
+globals_vars.html
 globals_enum.html
 globals_eval.html
 globals_defs.html
