@@ -47,23 +47,44 @@
 /*-----------------------------------------+
 |  DEFINES                                 |
 +-----------------------------------------*/
-/** \name OWB / DS2502 specific defines
- *  \anchor owb_defines
+/** \name OWB / DSxxxx EEPROM specific defines
+ *  \anchor owb_dsxxxx_defines
  *  all lengths are specified in bytes
  */
 /**@{*/
-#define Z72_OWB_ROM_LEN		         8	/**< Length of ROM in OWB devices	*/
-#define Z72_OWB_DS2502_MEM_SIZE    128	/**< memory section size of DS2502	*/
-#define Z72_OWB_DS2502_MEM_PAGESIZE	32  /**< memory section page size		*/
-#define Z72_OWB_DS2502_ST_SIZE	     8	/**< Status registers size			*/
+#define Z72_OWB_EE_ROM_LEN		 8	/**< Length of ROM in OWB devices	*/
+#define Z72_OWB_READ_LEN_MAX	 Z72_OWB_DS2431_MEM_SIZE	/**< max. length of ROM/mem in OWB devices	*/
 /**@}*/
+
+/** \name OWB / DS2502 specific defines
+ *  \anchor owb_ds2520_defines
+ *  all lengths are specified in bytes
+ */
+/**@{*/
+#define Z72_OWB_DS2502_FAM_CODE   0x09	/**< DS2502 family code	*/
+#define Z72_OWB_DS2502_MEM_SIZE   0x80	/**< memory section size      (bytes) */
+#define Z72_OWB_DS2502_MEM_PAGESIZE	32  /**< memory section page size (bytes) */
+#define Z72_OWB_DS2502_ST_SIZE	     8	/**< Status registers size    (bytes) */
+/**@}*/
+
+/** \name OWB / DS2431 specific defines
+ *  \anchor owb_ds2431_defines
+ *  all lengths are specified in bytes
+ */
+/**@{*/
+#define Z72_OWB_DS2431_FAM_CODE   0x2D	/**< family code	                  */
+#define Z72_OWB_DS2431_MEM_SIZE   0x90	/**< memory section size      (bytes) */
+#define Z72_OWB_DS2431_MEM_PAGESIZE	32  /**< memory section page size (bytes) */
+#define Z72_OWB_DS2431_SCP_ADDR_BITS 3	/**< scratch pad address bits (bytes) */
+#define Z72_OWB_DS2431_SCP_SIZE	  (1<<Z72_OWB_DS2431_SCP_ADDR_BITS) /**< scratch pad size */
+#define Z72_OWB_DS2431_SCP_MASK	  (Z72_OWB_DS2431_SCP_SIZE-1)       /**< scratch pad address mask */
 
 
 /** \name Z72 specific Getstat/Setstat standard codes
  *  \anchor getstat_setstat_codes
  */
 /**@{*/
-/*#define Z72_ROM_SKIP        M_DEV_OF+0x01       S: send skip ROM  - Not supported yet */
+#define Z72_ROM_SKIP        M_DEV_OF+0x01   /**<  S: send skip ROM           */ 
 #define Z72_ROM_SKIP_AUTOEN M_DEV_OF+0x02   /**<  S: enable auto skip ROM    */
                                             /*!<     0: disabled (default)   \n
                                              *       1: enabled              */
@@ -74,7 +95,8 @@
 #define Z72_BLK_ROM_READ     M_DEV_BLK_OF+0x00  /**< G:   get ROM            */
 #define Z72_BLK_ROM_MATCH    M_DEV_BLK_OF+0x01  /**< S:   match - Not supported yet */
 #define Z72_BLK_ROM_SEARCH   M_DEV_BLK_OF+0x02  /**< G:   search ROMs - Not supported yet */
-#define Z72_BLK_MEM          M_DEV_BLK_OF+0x03  /**< G,S: read/write mem     */
+#define Z72_BLK_MEM          M_DEV_BLK_OF+0x03  /**< G,S: read/write mem     *
+                                                  *       first two bytes of msgBlk.data hold offset for access */
 #define Z72_BLK_MEM_CRC      M_DEV_BLK_OF+0x04  /**< G:   read mem + CRC     */
 #define Z72_BLK_STATUS       M_DEV_BLK_OF+0x05  /**< G,S: read/write status  */
 /**@}*/
@@ -90,6 +112,7 @@
 #define Z72_ERR_BEYOND_MEM	(ERR_DEV+6)	/*!< access beyond mem region        */
 #define Z72_ERR_CRC			(ERR_DEV+7)	/*!< CRC error                       */
 #define Z72_ERR_UNDEF_STATE	(ERR_DEV+8)	/*!< CRC error                       */
+#define Z72_ERR_DEV_UNKNOWN	(ERR_DEV+9)	/*!< connected device not known      */
 /** @} */
 
 /*-----------------------------------------+

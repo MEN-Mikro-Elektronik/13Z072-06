@@ -30,6 +30,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
 #include "z72_drv_int.h"	/* Z72 driver internal header file */
 
 static const char IdentString[]=MENT_XSTR(MAK_REVISION);
@@ -61,13 +62,25 @@ static int32 Z72_Info(int32 infoType, ... );
 static char* Ident( void );
 static int32 Cleanup(LL_HANDLE *llHdl, int32 retCode);
 
-static int32 readRom( LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes );
-static int32 skipRom( LL_HANDLE *llHdl );
+/* generic EEPROM access functions */
+static int32 romRead( LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes );
+static int32 romSkip( LL_HANDLE *llHdl );
+static int32 memRead( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes );
+
+/* DS2502 specific EEPROM access functions */
+static int32 ds2502_statusRead( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes );
+static int32 ds2502_memReadCrc( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes );
+
+/* DS2431 specific EEPROM functions */
+static int32 ds2431_memWrite( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes );
+
+/* initialize Funktion pointers for known devices */
+static int32 initEeHandle( LL_HANDLE *llHdl );
 static int32 readMemory( LL_HANDLE *llHdl,
 						 u_int32 majState,
 						 u_int8 *buf,
-						 u_int16 size,
-						 u_int16 offs );
+						 u_int16 offs,
+						 u_int16*size );
 static int32 masterTxReset( LL_HANDLE *llHdl );
 static int32 waitOnReady( LL_HANDLE *llHdl );
 static int32 getDevError( LL_HANDLE *llHdl );
@@ -75,7 +88,6 @@ static int32 execCmd( LL_HANDLE *llHdl, u_int8 *data, u_int32 cmd );
 static void byteCrc( u_int8 *crc, u_int8 c );
 static void byteCrcFinish( u_int8 *crc );
 static u_int8 bufCrc8( u_int8 crcStart, u_int8 *p, u_int32 len);
-
 
 
 /****************************** Z72_GetEntry ********************************/
@@ -128,6 +140,7 @@ static int32 Z72_Init(
 	u_int32 gotsize;
 	int32 error;
 	u_int32 value;
+	u_int8 romBuf[Z72_OWB_EE_ROM_LEN];
 
 	/*------------------------------+
 	|  prepare the handle           |
@@ -195,8 +208,6 @@ static int32 Z72_Init(
 		error != ERR_DESC_KEY_NOTFOUND)
 		return( Cleanup(llHdl, error) );
 
-	llHdl->dbgLevel = DBG_ALL;
-
 	/* IRQ_ENABLE */
 	if ((error = DESC_GetUInt32(llHdl->descHdl, 0,
 								&value, "IRQ_ENABLE")) &&
@@ -214,6 +225,12 @@ static int32 Z72_Init(
 
 	if( value == 1 )
 		llHdl->mode |= Z72_MODE_AUTO_SKIPROM;
+
+	/* READ_RETRIES */
+	if ((error = DESC_GetUInt32(llHdl->descHdl, Z72_OWB_RETRY,
+								&llHdl->retries, "ACCESS_RETRIES")) &&
+		error != ERR_DESC_KEY_NOTFOUND)
+		return( Cleanup(llHdl, error) );
 
 	DBGWRT_1((DBH, "LL - Z72_Init (ma=0x%08p) in %s mode\n",
 					llHdl->ma,
@@ -235,11 +252,65 @@ static int32 Z72_Init(
 		Z72_SetStat(llHdl, M_MK_IRQ_ENABLE, 0, 1);
 	}
 
+	/* initialize common function pointers */
+	llHdl->eeHdl.romRead   = (int32 (*)( void *, u_int8 *, u_int32  )) romRead;
+	llHdl->eeHdl.romMatch  = NULL; /* currently not supported (single-drop systems only)*/					
+	llHdl->eeHdl.romSearch = NULL; /* currently not supported (single-drop systems only)*/
+	llHdl->eeHdl.romSkip   = (int32 (*)( void * )) romSkip;
+	
+	llHdl->eeHdl.memRead   = (int32 (*)(void *, u_int8 *, u_int16, u_int16)) memRead;
+
+	/* check for EEPROM type, this will also initialize the device specific fkt. pointers */
+	error = romRead( llHdl, romBuf, (u_int32) Z72_OWB_EE_ROM_LEN );
+	if( error != ERR_SUCCESS )
+		return( Cleanup(llHdl, error) );
+
 	*llHdlP = llHdl;	/* set low-level driver handle */
 
 	return(ERR_SUCCESS);
 }
 
+/********************************* initEeHandle ******************************/
+/** initialize access function pointers for known OWB devices
+ *
+ *  \param llHdl      \IN  Low-level handle
+ *
+ *  \return            \c 0 On success or error code
+ */
+static int32 initEeHandle( LL_HANDLE *llHdl )
+{
+	/* NULL what we do not support generic */
+	llHdl->eeHdl.statusRead  = NULL;
+	llHdl->eeHdl.statusWrite = NULL;
+
+	llHdl->eeHdl.memReadCrc  = NULL;
+	llHdl->eeHdl.memWrite    = NULL;
+
+	if( llHdl->eeHdl.familyCode == Z72_OWB_DS2502_FAM_CODE ){
+		/* currently no write access functions for memory or status supported *
+		 * programming voltage of 12V needed for write access, not available */
+		 
+		llHdl->eeHdl.statusRead  = (int32 (*)( void *, u_int8 *, u_int16, u_int16 ))ds2502_statusRead;
+		llHdl->eeHdl.memReadCrc  = (int32 (*)( void *, u_int8 *, u_int16, u_int16 ))ds2502_memReadCrc;
+		
+		llHdl->eeHdl.memSize	 = (int16)Z72_OWB_DS2502_MEM_SIZE;
+		llHdl->eeHdl.memPageSize = (int8)Z72_OWB_DS2502_MEM_PAGESIZE;
+		llHdl->eeHdl.tProg		 = 0; /* writing currently not supported */
+		
+
+	} else if( llHdl->eeHdl.familyCode == Z72_OWB_DS2431_FAM_CODE ){
+		llHdl->eeHdl.memWrite    = (int32 (*)( void *, u_int8 *, u_int16, u_int16 ))ds2431_memWrite;
+
+		llHdl->eeHdl.memSize	 = (int16)Z72_OWB_DS2431_MEM_SIZE;
+		llHdl->eeHdl.memPageSize = (int8)Z72_OWB_DS2431_MEM_PAGESIZE;
+		llHdl->eeHdl.tProg		 = (int32)Z72_OWB_DS2431_TPROG;
+	} else {
+		
+		return Z72_ERR_DEV_UNKNOWN;
+	}
+	
+	return ERR_SUCCESS;
+}
 /****************************** Z72_Exit ************************************/
 /** De-initialize hardware and clean up memory
  *
@@ -337,8 +408,10 @@ static int32 Z72_SetStat(
 {
     int32 value = (int32)value32_or_64;	    /* 32bit value */
     /* INT32_OR_64 valueP = value32_or_64;     stores 32/64bit pointer */
+    M_SG_BLOCK *blk = (M_SG_BLOCK*)value32_or_64; 	    /* stores block struct pointer */
 	int32 error = ERR_SUCCESS;
 	u_int8 retVal;
+	u_int8  romBuf[Z72_OWB_EE_ROM_LEN];
 
 	DBGWRT_1((DBH, "LL - Z72_SetStat: ch=%d code=0x%04x value=0x%x\n",
 			  ch,code,value));
@@ -382,6 +455,13 @@ static int32 Z72_SetStat(
 			break;
 
 		/*-----------------------------+
+		|  send skip ROM command       |
+		+-----------------------------*/
+		case Z72_ROM_SKIP:
+			error = llHdl->eeHdl.romSkip(llHdl);
+			break;
+
+		/*-----------------------------+
 		|  set automatic skip ROM mode |
 		+-----------------------------*/
 		case Z72_ROM_SKIP_AUTOEN:
@@ -395,7 +475,34 @@ static int32 Z72_SetStat(
 		|  (unknown)                |
 		+--------------------------*/
 		default:
-			error = ERR_LL_UNK_CODE;
+			/* single-drop bus? no EEPROM change danger?
+				check for EEPROM type, only handle known EEPROMs */
+			if( !(llHdl->mode & Z72_MODE_AUTO_SKIPROM) ) {
+				error = llHdl->eeHdl.romRead( llHdl, romBuf, (u_int32) Z72_OWB_EE_ROM_LEN );
+				if( error != ERR_SUCCESS )
+					return( error );
+			}
+			
+			switch(code)
+			{
+				/*--------------------------+
+				|  write memory content       |
+				+--------------------------*/
+				case Z72_BLK_MEM:
+					if( blk->data == NULL )
+					{
+						error = ERR_LL_ILL_PARAM;
+						break;
+					}
+					error = llHdl->eeHdl.memWrite( llHdl, (u_int8*)blk->data + 2,
+										 *(u_int16*)blk->data, (u_int16)blk->size-2 );
+					break;
+				/*--------------------------+
+				|  unknown                  |
+				+--------------------------*/
+				default:
+					error = ERR_LL_UNK_CODE;
+			}
 	}
 
 	return(error);
@@ -427,6 +534,7 @@ static int32 Z72_GetStat(
     int32 *valueP = (int32*)value32_or_64P;	            /* pointer to 32bit value  */
     INT32_OR_64	*value64P = value32_or_64P;		 		/* stores 32/64bit pointer  */
     M_SG_BLOCK *blk = (M_SG_BLOCK*)value32_or_64P; 	    /* stores block struct pointer */
+	u_int8  romBuf[Z72_OWB_EE_ROM_LEN];
 
 	int32 error = ERR_SUCCESS;
 
@@ -489,57 +597,79 @@ static int32 Z72_GetStat(
 		+--------------------------*/
 		case Z72_BLK_ROM_READ:
 			if( blk->data == NULL ||
-				blk->size < Z72_OWB_ROM_LEN )
+				blk->size < Z72_OWB_EE_ROM_LEN )
 			{
 				error = ERR_LL_ILL_PARAM;
 				break;
 			}
-			error = readRom( llHdl, (u_int8*)blk->data, blk->size );
+			error = llHdl->eeHdl.romRead( llHdl, (u_int8*)blk->data, blk->size );
 			break;
-		/*--------------------------+
-		|  get memory content       |
-		+--------------------------*/
-		case Z72_BLK_MEM:
-			if( blk->data == NULL )
-			{
-				error = ERR_LL_ILL_PARAM;
-				break;
-			}
-			error = readMemory( llHdl, Z72_ST_MAJ_MEM_READ,
-								(u_int8*)blk->data, (u_int16)blk->size,
-								*(u_int16*)blk->data );
-			break;
-		/*------------------------------------------------+
-		|  get memory content & generate CRC on each page |
-		+------------------------------------------------*/
-		case Z72_BLK_MEM_CRC:
-			if( blk->data == NULL )
-			{
-				error = ERR_LL_ILL_PARAM;
-				break;
-			}
-			error = readMemory( llHdl, Z72_ST_MAJ_MEM_READ_CRC,
-								(u_int8*)blk->data, (u_int16)blk->size,
-								*(u_int16*)blk->data );
-			break;
-		/*--------------------------+
-		|  get memory content       |
-		+--------------------------*/
-		case Z72_BLK_STATUS:
-			if( blk->data == NULL )
-			{
-				error = ERR_LL_ILL_PARAM;
-				break;
-			}
-			error = readMemory( llHdl, Z72_ST_MAJ_STATUS_READ,
-								(u_int8*)blk->data, (u_int16)blk->size,
-								*(u_int16*)blk->data );
-			break;
-		/*--------------------------+
-		|  unknown                  |
-		+--------------------------*/
+
+		/*-------------------------------------+
+		|  this will get device specific       |
+		+-------------------------------------*/
 		default:
-			error = ERR_LL_UNK_CODE;
+			/* single-drop bus? no EEPROM change danger?
+				check for EEPROM type, only handle known EEPROMs */
+			if( !(llHdl->mode & Z72_MODE_AUTO_SKIPROM) ) {
+				error = llHdl->eeHdl.romRead( llHdl, romBuf, (u_int32) Z72_OWB_EE_ROM_LEN );
+				if( error != ERR_SUCCESS )
+					return( error );
+			}
+			
+			switch(code)
+			{
+				/*--------------------------+
+				|  get memory content       |
+				+--------------------------*/
+				case Z72_BLK_MEM:
+					if( blk->data == NULL )
+					{
+						error = ERR_LL_ILL_PARAM;
+						break;
+					}
+					/* memRead is always supported, either generic or specific */
+					error = llHdl->eeHdl.memRead( llHdl, (u_int8*)blk->data,
+										 *(u_int16*)blk->data, (u_int16)blk->size );
+					break;
+				/*------------------------------------------------+
+				|  get memory content & generate CRC on each page |
+				+------------------------------------------------*/
+				case Z72_BLK_MEM_CRC:
+					if( blk->data == NULL )
+					{
+						error = ERR_LL_ILL_PARAM;
+						break;
+					}
+					if( !llHdl->eeHdl.memReadCrc ) {
+						error = ERR_LL_ILL_FUNC;
+						break;
+					}
+					error = llHdl->eeHdl.memReadCrc( llHdl, (u_int8*)blk->data, 
+										*(u_int16*)blk->data, (u_int16)blk->size );
+					break;
+				/*--------------------------+
+				|  get status region content       |
+				+--------------------------*/
+				case Z72_BLK_STATUS:
+					if( blk->data == NULL )
+					{
+						error = ERR_LL_ILL_PARAM;
+						break;
+					}
+					if( !llHdl->eeHdl.statusRead ) {
+						error = ERR_LL_ILL_FUNC;
+						break;
+					}
+					error = llHdl->eeHdl.statusRead( llHdl, (u_int8*)blk->data,
+										*(u_int16*)blk->data, (u_int16)blk->size);
+					break;
+				/*--------------------------+
+				|  unknown                  |
+				+--------------------------*/
+				default:
+					error = ERR_LL_UNK_CODE;
+			}
 	}
 
 	return(error);
@@ -818,7 +948,55 @@ static int32 Cleanup(
 	return(retCode);
 }
 
-/********************************* readRom *********************************/
+static int32 owbBlkWrite(LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes)
+{
+	int32 error = ERR_SUCCESS;
+
+	do{
+		DBGWRT_5((DBH, "LL - Z72_OWB     owbBlkWrite val=0x%02x\n", buf[0]));
+		error = execCmd( llHdl, buf, Z72_CTL_CMD_WBYT );
+		if( error != ERR_SUCCESS )
+			return error;
+		buf += 1;
+		numBytes -= 1;
+	} while (numBytes);
+	return error;
+}
+
+static int32 owbBlkRead(LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes)
+{
+	int32 error = ERR_SUCCESS;
+
+	do{
+		error = execCmd( llHdl, buf, Z72_CTL_CMD_RBYT );
+		if( error != ERR_SUCCESS )
+			return error;
+		DBGWRT_5((DBH, "LL - Z72_OWB     owbBlkRead val=0x%02x\n", buf[0]));
+		buf += 1;
+		numBytes -= 1;
+	} while (numBytes);
+	return error;
+}
+
+static int32 owbGetToMemFkt(LL_HANDLE *llHdl)
+{
+	int32 error;
+	u_int8 buf[Z72_OWB_EE_ROM_LEN];
+	
+	if( (error = masterTxReset( llHdl )) != ERR_SUCCESS )
+		goto CLEANUP;
+	
+	/* get to mem state machine */
+	if( llHdl->mode & Z72_MODE_AUTO_SKIPROM ) {
+		error = llHdl->eeHdl.romSkip( llHdl );
+	} else {
+		error = llHdl->eeHdl.romRead( llHdl, buf, Z72_OWB_EE_ROM_LEN );
+	}
+	
+CLEANUP:
+	return error;
+}
+/********************************* romRead *********************************/
 /** Read content of OWB devices ROM
  *
  *	The function will always read the full content of the ROM in order to
@@ -826,76 +1004,89 @@ static int32 Cleanup(
  *
  *  \param llHdl      \IN  Low-level handle
  *  \param buf        \OUT buffer for read ROM data
- *  \param numBytes   \IN  number of bytes to read (>= Z72_OWB_ROM_LEN)
+ *  \param numBytes   \IN  number of bytes to read (>= Z72_OWB_EE_ROM_LEN)
  *
  *  \return            \c 0 On success or error code
  */
-static int32 readRom( LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes )
+static int32 romRead( LL_HANDLE *llHdl, u_int8 *buf, u_int32 numBytes )
 {
 	int32 error = ERR_SUCCESS;
 	u_int32 i;
 	u_int8 owbCmd;
-	/* initialize crc */
 	u_int8 crc;
+	u_int32 readRetries = llHdl->retries;
 
-	DBGWRT_1((DBH, "LL - Z72_OWB readRom\n"));
+	DBGWRT_1((DBH, "LL - Z72_OWB romRead\n"));
 
-	if( numBytes < Z72_OWB_ROM_LEN ) {
+	if( numBytes < Z72_OWB_EE_ROM_LEN ) {
 		error = ERR_LL_ILL_PARAM;
 		goto CLEANUP;
 	}
 
-	/* do Reset/Presence Pulse Cycle */
+	/* do Reset/Presence Pulse Cycle, wake up device */
 	if( (error = masterTxReset( llHdl )) != ERR_SUCCESS )
 		goto CLEANUP;
 
-	/* send command */
-	owbCmd = Z72_OWB_ROM_READ;
-	execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
+	do {
+		/* send command */
+		owbCmd = Z72_OWB_ROM_READ;
+		error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
 
-	for( i = 0; error == ERR_SUCCESS && i < Z72_OWB_ROM_LEN; i++) {
-		error = execCmd( llHdl, &buf[i], Z72_CTL_CMD_RBYT );
-	}
+		for( i = 0; error == ERR_SUCCESS && i < Z72_OWB_EE_ROM_LEN; i++) {
+			error = execCmd( llHdl, &buf[i], Z72_CTL_CMD_RBYT );
+		}
+		if( error == ERR_SUCCESS ){
 
-	DBGWRT_4(( DBH, "\nZ72_ROM: Family: 0x%02x\n"
-					"         Serial: 0x%02x     0x%02x\n",
-					buf[0], buf[1], buf[2] ));
-	for( i = 3; i < Z72_OWB_ROM_LEN - 1; i+=2) {
-		DBGWRT_4(( DBH,	"                 0x%02x     0x%02x\n",
-						buf[i], buf[i+1] ));
-	}
-	DBGWRT_4((DBH,"            CRC: 0x%02x\n", buf[Z72_OWB_ROM_LEN - 1] ));
+			DBGWRT_4(( DBH, "\nZ72_ROM: Family: 0x%02x\n"
+							"         Serial: 0x%02x     0x%02x\n",
+							buf[0], buf[1], buf[2] ));
+			for( i = 3; i < Z72_OWB_EE_ROM_LEN - 1; i+=2) {
+				DBGWRT_4(( DBH,	"                 0x%02x     0x%02x\n",
+								buf[i], buf[i+1] ));
+			}
+			DBGWRT_4((DBH,"            CRC: 0x%02x\n", buf[Z72_OWB_EE_ROM_LEN - 1] ));
 
-	crc = bufCrc8( Z72_OWB_ROMCRC_INIT, buf, 7 );
-	if( crc != buf[Z72_OWB_ROM_LEN - 1] ) {
-		DBGWRT_ERR((DBH,"LL - Z72_OWB readRom: CRC is 0x%02x; sb 0x%02x\n",
-						crc, buf[Z72_OWB_ROM_LEN - 1] ));
-		error = Z72_ERR_CRC;
-		goto CLEANUP;
-	}
-
-	if( error ) {
-		masterTxReset( llHdl );
-	} else {
-		llHdl->majState = Z72_ST_MAJ_IDLE_MEM;
-	}
-
+			crc = bufCrc8( Z72_OWB_ROMCRC_INIT, buf, 7 );
+			if( crc != buf[Z72_OWB_EE_ROM_LEN - 1] ) {
+				DBGWRT_ERR((DBH,"LL - Z72_OWB romRead: CRC is 0x%02x; sb 0x%02x\n",
+								crc, buf[Z72_OWB_EE_ROM_LEN - 1] ));
+				error = Z72_ERR_CRC;
+				goto RETRY_LOOP_END;
+			}
+		} else {
+			DBGWRT_ERR(( DBH, "\nZ72_ROM: read ROM failed @i=%d\n", i ));
+		}
+RETRY_LOOP_END:		 
+		readRetries -= 1;
+	} while ( readRetries && error != ERR_SUCCESS );
+	
 CLEANUP:
+	if( error == ERR_SUCCESS ) {
+		llHdl->majState = Z72_ST_MAJ_IDLE_MEM;
+		/* known device? init function pointers */
+		llHdl->eeHdl.familyCode = buf[0];
+		error = initEeHandle(llHdl);
+	} else {
+		masterTxReset( llHdl );
+	}
+
 	return error;
 }
 
-/********************************* readRom ***********************************/
+/********************************* romSkip ***********************************/
 /** Send skip ROM command to OWB device
  *
  *  \param llHdl      \IN  Low-level handle
  *
  *  \return            \c 0 On success or error code
  */
-static int32 skipRom( LL_HANDLE *llHdl )
+static int32 romSkip( LL_HANDLE *llHdl )
 {
 	int32 error   = ERR_LL_ILL_FUNC;
 	u_int8 owbCmd;
-	DBGWRT_1((DBH, "LL - Z72_OWB skipRom\n"));
+	DBGWRT_1((DBH, "LL - Z72_OWB romSkip\n"));
 
 	/* do Reset/Presence Pulse Cycle */
 	if( (error = masterTxReset( llHdl )) != ERR_SUCCESS )
@@ -914,6 +1105,58 @@ CLEANUP:
 	return( error );
 }
 
+/********************************* memRead **********************************/
+/** Generic function to read content of OWB devices memory region
+ *
+ *	The function will read the specified amount of bytes from the devices
+ *  memory region.
+ *
+ *  \param llHdl      \IN  Low-level handle
+ *  \param buf        \OUT buffer for read data
+ *  \param offs       \IN  start offset in region
+ *  \param numBytes   \IN  number of bytes to read
+ *
+ *  \return            \c 0 On success or error code
+ */
+static int32 memRead( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes )
+{
+	int32 error = ERR_SUCCESS;
+	u_int32 readRetries = 0;
+	u_int8 retrBuf[Z72_OWB_READ_LEN_MAX];
+	u_int8 *rdBuf = buf;
+	u_int16 rdNum = numBytes;
+
+	DBGWRT_1((DBH, "LL - Z72_OWB memRead start=0x%04x len=0x%04x\n", offs, numBytes));
+
+	/* do Reset/Presence Pulse Cycle, wake up device */
+	if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
+		goto CLEANUP;
+
+	do {
+		error = readMemory( llHdl, Z72_ACC_MEM_READ, rdBuf, offs, &rdNum );
+		/* compare the read data, max. rdNum bytes */
+		if( error == ERR_SUCCESS ) {
+			if( readRetries && (memcmp(buf, retrBuf, rdNum) != 0) ) 
+				error = Z72_ERR_CRC;
+			
+			/* for next loop: swap read buffers */
+			if (rdBuf == buf)
+				rdBuf = retrBuf;
+			else
+				rdBuf = buf;
+			
+			if( llHdl->retries && !readRetries )
+				error = 1; /* reread at least once */
+		}
+		
+		readRetries += 1;
+	} while ( (llHdl->retries >= readRetries) && (error != ERR_SUCCESS) );
+	
+CLEANUP:
+	DBGWRT_2((DBH, "LL - Z72_OWB memRead finish error=0x%04x\n", error));
+	return error;
+}
+
 /********************************* readMemory ********************************/
 /** Read content of OWB devices memory or status region
  *
@@ -921,212 +1164,149 @@ CLEANUP:
  *  memory or status region. Every received CRC is checked for validity.
  *
  *  \param llHdl      \IN  Low-level handle
- *  \param majState   \IN  kind of read to perform
- *  \param buf        \OUT buffer for read ROM data
+ *  \param accType    \IN  kind of read to perform 
+ *  \param buf        \OUT buffer for read data
+ *  \param offs       \IN  start offset in region
  *  \param size       \IN  number of bytes to read
- *  \param offs       \IN  start offset in region to read
  *
  *  \return            \c 0 On success or error code
  */
 static int32 readMemory( LL_HANDLE *llHdl,
-						 u_int32 majState,
+						 u_int32 accType,
 						 u_int8 *buf,
-						 u_int16 size,
-						 u_int16 offs )
+						 u_int16 offs,
+						 u_int16 *size )
 {
 	int32 error = ERR_SUCCESS;
 	u_int32 rdIdx = 0;
+	u_int16 rdSize = *size;
 	u_int8 owbCmd, rdVal = 0, crc;
 
-	DBGWRT_1((DBH, "LL - Z72_OWB readMemory start=0x%04x len=0x%04x\n",
-					offs, size));
+	DBGWRT_2((DBH, "LL - Z72_OWB     readMemory start=0x%04x len=0x%04x type=0x%02x\n",
+					offs, rdSize, accType));
 
-	if( size <= 0 )
+	if( (rdSize == 0) || (offs >= llHdl->eeHdl.memSize) ) {
+		error = ERR_LL_ILL_PARAM;
 		goto CLEANUP;
-
-	if( offs >= Z72_OWB_DS2502_MEM_SIZE ){
-		error = Z72_ERR_BEYOND_MEM;
-		goto CLEANUP;
+	}
+	if( ((offs + rdSize) >= llHdl->eeHdl.memSize) ) {
+		rdSize = *size = llHdl->eeHdl.memSize - offs;
+		DBGWRT_ERR((DBH, "LL - Z72_OWB readMemory reduced read to len=0x%04x\n",
+					rdSize));
 	}
 
 	if( llHdl->majState != Z72_ST_MAJ_IDLE_MEM &&
 		( llHdl->majState != Z72_ST_MAJ_IDLE ||
 		  !(llHdl->mode & Z72_MODE_AUTO_SKIPROM) ||
-		  (error = skipRom( llHdl )) != ERR_SUCCESS) )
+		  (error = romSkip( llHdl )) != ERR_SUCCESS) )
 	{
-		/* !IDLE_MEM & (!IDLE | !AUTO_SKIPROM | skipRom() != SUCC ) */
+		/* !IDLE_MEM & (!IDLE | !AUTO_SKIPROM | romSkip() != SUCC ) */
+		/* should never happen since we always check family Code before accessing mem */
 		if( error == ERR_SUCCESS )
 			error = Z72_ERR_NO_ROMFKT;
 		goto CLEANUP;
 	}
 
-	llHdl->majState = majState;
-	llHdl->fncState = Z72_ST_RX_CMD;
+	switch( accType )
+	{
+		case( Z72_ACC_MEM_READ ):
+			owbCmd = Z72_OWB_MEM_READ;
+			break;
+		case( Z72_ACC_MEM_READ_CRC ):
+			/* currently only supported on DS2502 */
+			owbCmd = Z72_OWB_DS2502_MEM_READ_CRC;
+			break;
+		case( Z72_ACC_STA_READ ):
+			/* currently only supported on DS2502 */
+			owbCmd = Z72_OWB_DS2502_STATUS_READ;
+			break;
+		default:
+			error = ERR_LL_ILL_PARAM;
+			goto CLEANUP;
+	}
+	error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
+	if( error != ERR_SUCCESS )
+		goto CLEANUP;
 
-	do{
-		DBGWRT_3((DBH, "LL - Z72_OWB readMemory state %d\n", llHdl->fncState ));
-		switch( llHdl->fncState )
-		{
-			case( Z72_ST_RX_CMD ):
+	/* start CRC computing */
+	crc = Z72_OWB_ROMCRC_INIT;
+	byteCrc( &crc, owbCmd );
+
+	/* send TA1 */
+	owbCmd = (u_int8)(offs & 0x00ff);
+	error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
+	if( error != ERR_SUCCESS )
+		goto CLEANUP;
+	byteCrc( &crc, owbCmd );
+	
+	/* send TA2 */
+	owbCmd = (u_int8)((offs & 0xff00) >> 8);
+	error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
+	if( error != ERR_SUCCESS )
+		goto CLEANUP;
+	byteCrc( &crc, owbCmd );
+
+	byteCrcFinish( &crc );
+	
+	/* verify CRC of CMD + TA[1-2], if supported */
+	if( llHdl->eeHdl.familyCode == Z72_OWB_DS2502_FAM_CODE ) {
+		/* DS2502 verifies command and TA by CRC! */
+		error = execCmd( llHdl, &rdVal, Z72_CTL_CMD_RBYT );
+		if( error != ERR_SUCCESS )
+			goto CLEANUP;
+
+		if( crc != rdVal ) {
+			error = Z72_ERR_CRC;
+			DBGWRT_ERR((DBH,"LL - Z72_OWB readMemory: CMD/TA CRC "
+							"is 0x%02x; sb 0x%02x\n", crc, rdVal ));
+			goto CLEANUP;
+		}	
+	}
+
+	/* restart CRC, perform actual read memory/status */
+	crc = Z72_OWB_ROMCRC_INIT;
+
+	do {
+		error = execCmd( llHdl, &rdVal, Z72_CTL_CMD_RBYT );
+		if( error != ERR_SUCCESS )
+			goto CLEANUP;
+
+		buf[rdIdx] = rdVal;
+		rdSize -= 1;
+
+		byteCrc( &crc, rdVal );
+
+		DBGWRT_4((DBH, "LL - Z72_OWB         readMemory: rdIdx 0x%04x, rdVal=0x%02x    crc=0x%02x\n",
+						rdIdx, rdVal, crc ));
+
+		/* ready for CRC? check only DS2502 */
+		if( llHdl->eeHdl.familyCode == Z72_OWB_DS2502_FAM_CODE ) {
+			if( (accType == Z72_ACC_MEM_READ && !rdSize) ||
+				(accType == Z72_ACC_MEM_READ_CRC && !((rdIdx + offs + 1) % llHdl->eeHdl.memPageSize)) ||
+				(accType == Z72_ACC_STA_READ && !rdSize) )
 			{
-				switch( llHdl->majState )
-				{
-					case( Z72_ST_MAJ_MEM_READ ):
-						owbCmd = Z72_OWB_DS2502_MEM_READ;
-						break;
-					case( Z72_ST_MAJ_MEM_READ_CRC ):
-						owbCmd = Z72_OWB_DS2502_MEM_READ_CRC;
-						break;
-					case( Z72_ST_MAJ_STATUS_READ ):
-						owbCmd = Z72_OWB_DS2502_STATUS_READ;
-						break;
-					default:
-						error = ERR_LL_ILL_PARAM;
-						goto CLEANUP;
-				}
-				error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
-				if( error != ERR_SUCCESS )
-					goto CLEANUP;
-
-				crc = Z72_OWB_ROMCRC_INIT;
-				byteCrc( &crc, owbCmd );
-
-				llHdl->fncState = Z72_ST_RX_TA;
-				break;
-			}
-			case( Z72_ST_RX_TA ):
-			{
-				owbCmd = (u_int8)(offs & 0x00ff);
-				error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
-				if( error != ERR_SUCCESS )
-					goto CLEANUP;
-
-				byteCrc( &crc, owbCmd );
-
-				owbCmd = (u_int8)((offs & 0xff00) >> 8);
-				error = execCmd( llHdl, &owbCmd, Z72_CTL_CMD_WBYT );
-				if( error != ERR_SUCCESS )
-					goto CLEANUP;
-
-				byteCrc( &crc, owbCmd );
 				byteCrcFinish( &crc );
 
-				llHdl->fncState = Z72_ST_RX_CRC1;
-				break;
-			}
-			case( Z72_ST_RX_CRC1 ):
-			{
-				/* read CRC of command and address */
 				error = execCmd( llHdl, &rdVal, Z72_CTL_CMD_RBYT );
-				if( error != ERR_SUCCESS )
-					goto CLEANUP;
-
-				if( crc != rdVal ) {
-					error = Z72_ERR_CRC;
-					DBGWRT_ERR((DBH,"LL - Z72_OWB readMemory: command/addr CRC "
-									"is 0x%02x; sb 0x%02x\n", crc, rdVal ));
-					goto CLEANUP;
-				}
-
-				if( error != ERR_SUCCESS ) /* CRC error ? */
-					goto CLEANUP;
-
-				llHdl->fncState = Z72_ST_RX_DATA;
-				crc = Z72_OWB_ROMCRC_INIT;
-				break;
-			}
-			case( Z72_ST_RX_DATA ):
-			{
-				error = execCmd( llHdl, &rdVal, Z72_CTL_CMD_RBYT );
-				if( error != ERR_SUCCESS )
-					goto CLEANUP;
-
-				buf[rdIdx] = rdVal;
-				size -= 1;
-
-				byteCrc( &crc, rdVal );
-
-				DBGWRT_4((DBH, "LL - Z72_OWB readMemory: "
-							   "rdIdx 0x%04x: rdVal=0x%02x    crc=0x%02x\n",
-								rdIdx, rdVal, crc ));
-
-				/* read memory and
-				 * reached end of data memory? */
-				if( llHdl->majState == Z72_ST_MAJ_MEM_READ )
+				if( error == ERR_SUCCESS && 
+					crc != rdVal ) 
 				{
-					if( (rdIdx + offs) == (Z72_OWB_DS2502_MEM_SIZE - 1)) {
-						llHdl->fncState = Z72_ST_RX_CRC2;
-						byteCrcFinish( &crc );
-						break;
-					}
-				}
-
-				/* read memory & generate CRC and
-				 * reached end of memory page?     */
-				if( llHdl->majState == Z72_ST_MAJ_MEM_READ_CRC )
-				{
-					if( !((rdIdx + offs + 1) % Z72_OWB_DS2502_MEM_PAGESIZE)) {
-						llHdl->fncState = Z72_ST_RX_CRC2;
-						byteCrcFinish( &crc );
-						rdIdx++;
-						break;
-					}
-				}
-
-				/* read status and
-				 * reached end of status page? */
-				if( llHdl->majState == Z72_ST_MAJ_STATUS_READ )
-				{
-					if( (rdIdx + offs) == (Z72_OWB_DS2502_ST_SIZE - 1)) {
-						llHdl->fncState = Z72_ST_RX_CRC2;
-						byteCrcFinish( &crc );
-						break;
-					}
-				}
-
-				/* reached desired size before end of memory/status */
-				if( !size )
-					goto CLEANUP;
-
-				llHdl->fncState = Z72_ST_RX_DATA; /* stay and read more */
-				rdIdx++;
-				break;
-			}
-			case( Z72_ST_RX_CRC2 ):
-			{
-				/* read CRC of data */
-				error = execCmd( llHdl, &rdVal, Z72_CTL_CMD_RBYT );
-
-				if( error == ERR_SUCCESS && crc != rdVal ) {
 					error = Z72_ERR_CRC;
 					DBGWRT_ERR((DBH,"LL - Z72_OWB readMemory: data CRC "
 									"is 0x%02x; sb 0x%02x\n", crc, rdVal ));
+					goto CLEANUP;
 				}
-
-				/* computed crc of last page? If not, read next page     */
-				if( error == ERR_SUCCESS &&
-					llHdl->majState == Z72_ST_MAJ_MEM_READ_CRC &&
-					(rdIdx + offs) != Z72_OWB_DS2502_MEM_SIZE )
-				{
-					/* start reading next page */
-					llHdl->fncState = Z72_ST_RX_DATA;
-					crc = Z72_OWB_ROMCRC_INIT;
-					break;
-				}
-
-				/* finished */
-				goto CLEANUP;
+				/* restart CRC for next page */
+				crc = Z72_OWB_ROMCRC_INIT;
 			}
-			default:
-				error = Z72_ERR_UNDEF_STATE;
-				goto CLEANUP;
 		}
 
-	} while ( !error );
+		rdIdx++;
+	} while ( rdSize );
 
 
 CLEANUP:
-	DBGWRT_2((DBH, "LL - Z72_OWB readMemory finish (error = 0x%04x)\n",error));
+	DBGWRT_3((DBH, "LL - Z72_OWB     readMemory finish (error = 0x%04x)\n",error));
 	masterTxReset( llHdl );
 	return error;
 }
@@ -1154,6 +1334,7 @@ static int32 masterTxReset( LL_HANDLE *llHdl )
 static int32 waitOnReady( LL_HANDLE *llHdl )
 {
 	int32 error = ERR_SUCCESS;
+	u_int32 retryCnt = Z72_POLL_RETRY_MAX;
 
 	if( !(llHdl->mode & Z72_MODE_POLL) &&
 		(llHdl->exeSem != NULL) )
@@ -1167,25 +1348,24 @@ static int32 waitOnReady( LL_HANDLE *llHdl )
 
 			DBGCMD( ctl = (u_int8)MREAD_D32( llHdl->ma, Z72_REG_CTL ) );
 			DBGCMD( sts = (u_int8)MREAD_D32( llHdl->ma, Z72_REG_STS ) );
-			DBGWRT_4((DBH, "LL - Z72_OWB waitOnReady(Sem) finish "
-						   "(error = 0x%04x) ctl=0x%02x sts=0x%02x\n",
-						   error, ctl, sts));
-		} while( error==ERR_OSS_SIG_OCCURED );
+			DBGWRT_5((DBH, "LL - Z72_OWB waitOnReady(Sem) finish "
+							   "(error = 0x%04x) ctl=0x%02x sts=0x%02x\n",
+							   error, ctl, sts));
+		} while( (error==ERR_OSS_SIG_OCCURED) || (!(error==ERR_SUCCESS) && retryCnt--) );
 	} else
 	{
 		u_int8 sts;
-		u_int32 retryCnt = Z72_POLL_RETRY_MAX;
 		DBGCMD( u_int8 ctl );
 
 		do{
 			OSS_Delay( llHdl->osHdl, Z72_POLL_TOUT );
 			sts = (u_int8)MREAD_D32( llHdl->ma, Z72_REG_STS );
-		} while( (sts & Z72_STS_BUSY) && retryCnt );
+		} while( (sts & Z72_STS_BUSY) && retryCnt-- );
 		/* save status */
 		llHdl->exeStatus = (u_int8)MREAD_D32( llHdl->ma, Z72_REG_STS );
 
 		DBGCMD( ctl = (u_int8)MREAD_D32( llHdl->ma, Z72_REG_CTL ));
-		DBGWRT_4((DBH, "LL - Z72_OWB waitOnReady(Delay) finish "
+		DBGWRT_5((DBH, "LL - Z72_OWB waitOnReady(Delay) finish "
 					   "(error = 0x%04x) ctl=0x%02x sts=0x%02x\n",
 					   error, ctl, llHdl->exeStatus ));
 
@@ -1194,6 +1374,7 @@ static int32 waitOnReady( LL_HANDLE *llHdl )
 		MWRITE_D32( llHdl->ma, Z72_REG_STS,
 					llHdl->exeStatus & (Z72_STS_MIRQ | Z72_STS_EIRQ) );
 	}
+
 	return error;
 }
 
@@ -1273,14 +1454,14 @@ CLEANUP:
 
 /* CRC subroutines */
 
-/********************************* reflectByte *******************************/
-/** reflect byte specified (MSB <---> LSB)
+/********************************* mirrorByte *******************************/
+/** mirror byte specified (MSB <---> LSB)
  *
- *  \param c          \IN  byte to reflect
+ *  \param c          \IN  byte to mirror
  *
- *  \return           \c   reflected byte
+ *  \return           \c   mirrored byte
  */
-static u_int8 reflectByte ( u_int8 c )
+static u_int8 mirrorByte ( u_int8 c )
 {
 	/* reflects the Byte c */
 	u_int32 i, j = 1;
@@ -1305,7 +1486,7 @@ static void byteCrc( u_int8 *crc, u_int8 c )
 	u_int32 j;
 	u_int8 bit;
 
-	c = reflectByte( c );
+	c = mirrorByte( c );
 
 	for( j = 0x80; j; j >>= 1)
 	{
@@ -1319,7 +1500,7 @@ static void byteCrc( u_int8 *crc, u_int8 c )
 }
 
 /********************************* byteCrcFinish *****************************/
-/** finsh crc computation and reflect crc for comparing
+/** finsh crc computation and mirror crc for comparing
  *
  *  \param crc        \INOUT  buffer with old/new CRC value
  */
@@ -1335,7 +1516,7 @@ static void byteCrcFinish( u_int8 *crc )
 		if( bit )
 			*crc ^= Z72_OWB_ROMCRC_POLY;
 	}
-	*crc = reflectByte( *crc );
+	*crc = mirrorByte( *crc );
 }
 
 /********************************* bufCrc8 ***********************************/
@@ -1361,5 +1542,235 @@ static u_int8 bufCrc8( u_int8 crcStart, u_int8 *buf, u_int32 len)
 	return(crc);
 }
 
+/********************************* ds2502_statusRead ************************/
+/** DS2502: read EEPROM status region
+ *
+ *	The function will read the specified amount of bytes from the devices
+ *  status region.
+ *
+ *  \param llHdl      \IN  Low-level handle
+ *  \param buf        \OUT buffer for read ROM data
+ *  \param offs       \IN  start offset in region to read
+ *  \param numBytes   \IN  number of bytes to read
+ *
+ *  \return            \c 0 On success or error code
+ */
+static int32 ds2502_statusRead( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes )
+{
+	int32 error = ERR_SUCCESS;
+	
+	if( (offs + numBytes) > Z72_OWB_DS2502_ST_SIZE ) {
+		DBGWRT_ERR((DBH,"LL - Z72_OWB DS2502 readStatus: wrong offset/numBytes: 0x%02x/%02x\n", offs, numBytes ));
+		return ERR_LL_ILL_PARAM;
+	}
+	
+	error = readMemory( llHdl, Z72_ACC_STA_READ, buf, offs, &numBytes );
+	
+	return error;
+	
+}
+
+/********************************* ds2502_memReadCrc ************************/
+/** DS2502: read EEPROM memory region, generate CRC
+ *
+ *	The function will read the specified amount of bytes from the devices
+ *  memory region and generate the CRC.
+ *
+ *  \param llHdl      \IN  Low-level handle
+ *  \param buf        \OUT buffer for read ROM data
+ *  \param offs       \IN  start offset in region to read
+ *  \param numBytes   \IN  number of bytes to read
+ *
+ *  \return            \c 0 On success or error code
+ */
+static int32 ds2502_memReadCrc( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBytes )
+{
+	int32 error = ERR_SUCCESS;
+	u_int32 readRetries = llHdl->retries;
+	
+	if( (offs + numBytes) > Z72_OWB_DS2502_MEM_SIZE ) {
+		DBGWRT_ERR((DBH,"LL - Z72_OWB DS2502 memReadCrc: wrong offset/numBytes: 0x%02x 0x%02x\n", offs, numBytes ));
+		return ERR_LL_ILL_PARAM;
+	}
+	
+	do{
+		error = readMemory( llHdl, Z72_ACC_MEM_READ_CRC, buf, offs, &numBytes );
+	} while ( error != ERR_SUCCESS && readRetries-- );
+
+	return error;
+	
+}
+
+/*************************** ds2431_memWrite ********************************/
+/** Write content to OWB devices scratch pad, verify and copy to EEPROM
+*   Data must be aligned to scratchpad size already!
+*
+ *  \param llHdl      \IN  Low-level handle
+ *  \param buf        \OUT buffer for read data
+ *  \param offs       \IN  start offset in region
+ *
+ *  \return            \c 0 On success or error code
+*/
+static int32 ds2431_scpWrite( LL_HANDLE *llHdl, 
+							u_int8 *buf, 
+							u_int16 offs ) 
+{
+	int32 error = ERR_SUCCESS;
+	u_int8 wrRetries = 0;
+	u_int8 wBuf[4];
+	u_int8 rBuf[Z72_OWB_DS2431_SCP_SIZE+3];
+	u_int8 esByte = 7; /* (offs + numBytes -1) % Z72_OWB_DS2431_SCP_SIZE; */
+
+	DBGWRT_2((DBH, "LL - Z72_OWB     ds2431_scpWrite offset=0x%04x\n", offs));
+
+	do {
+		/* do Reset/Presence Pulse Cycle, wake up device, get to MEM state machine */
+		if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+		
+		wBuf[0] = Z72_OWB_DS2431_SCP_WRITE;
+		wBuf[1] = offs & 0xff;
+		wBuf[2] = offs >> 8;
+		
+		error = owbBlkWrite( llHdl, wBuf, 3 );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+		error = owbBlkWrite( llHdl, buf, Z72_OWB_DS2431_SCP_SIZE );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+#ifdef OWB_WITH_CRC16		
+		/* read the CRC and compare to computed one */
+		error = owbBlkRead( llHdl, rBuf, 2 );
+		if( error != ERR_SUCCESS || rBuf[0] != crc16 ) {
+			error = Z72_ERR_CRC;
+			goto RETRY_LOOP_END;
+		}
+#else
+		/* do Reset/Presence Pulse Cycle, wake up device, get to MEM state machine */
+		if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+		wBuf[0] = Z72_OWB_DS2431_SCP_READ;
+		error = execCmd( llHdl, wBuf, Z72_CTL_CMD_WBYT );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+		
+		error = owbBlkRead( llHdl, rBuf, Z72_OWB_DS2431_SCP_SIZE + 3 );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+		/* compare written and read data, instead of CRC! */
+		if( rBuf[0] != wBuf[1] || 
+			rBuf[1] != wBuf[2] ||
+			rBuf[2] != esByte || 
+			(memcmp(buf, &rBuf[3], Z72_OWB_DS2431_SCP_SIZE) != 0) )
+		{
+			DBGWRT_ERR((DBH,"LL - Z72_OWB DS2502     ds2431_scpWrite: failed to write scratch pad (retry=%d)\n", wrRetries ));
+			error = Z72_ERR_CRC;
+			goto RETRY_LOOP_END;
+		}
+#endif
+		/* do Reset/Presence Pulse Cycle, wake up device, get to MEM state machine */
+		if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+		wBuf[0] = Z72_OWB_DS2431_SCP_COPY;
+		wBuf[3] = esByte;
+		error = owbBlkWrite( llHdl, wBuf, 4 );
+		if( error != ERR_SUCCESS )
+			goto RETRY_LOOP_END;
+
+		OSS_Delay( llHdl->osHdl, llHdl->eeHdl.tProg ); /* sleep some ms to wait for programming to finish */
+		error = execCmd( llHdl, rBuf, Z72_CTL_CMD_RBYT );
+		if( error != ERR_SUCCESS || rBuf[0] != 0xAA ) {
+			DBGWRT_ERR((DBH, "LL - Z72_OWB     ds2431_scpWrite  SCP_COPY answer=0x%02x sb 0xAA\n", rBuf[0] ));
+			error = Z72_ERR_CRC;
+		}										   
+
+RETRY_LOOP_END:
+		DBGWRT_4((DBH, "LL - Z72_OWB     ds2431_scpWrite error=0x%04x\n", error));
+		wrRetries += 1;
+	} while( error != ERR_SUCCESS && wrRetries < llHdl->retries );
+
+	DBGWRT_3((DBH, "LL - Z72_OWB     ds2431_scpWrite error=0x%04x retries=%d\n", error, wrRetries-1));
+	
+	masterTxReset( llHdl );
+	return error;
+}
+
+/*************************** ds2431_memWrite ********************************/
+/** Write content to OWB devices memory region
+ *
+ *	The function will write the specified amount of bytes to the devices
+ *  memory region. If data is not aligned to Z72_OWB_DS2431_SP_SIZE we will
+ *  read memory region of size Z72_OWB_DS2431_SP_SIZE and only modify affected
+ *  bytes.
+ *
+ *  \param llHdl      \IN  Low-level handle
+ *  \param buf        \OUT buffer for read data
+ *  \param offs       \IN  start offset in region
+ *  \param numBytes   \IN  number of bytes to write
+ *
+ *  \return            \c 0 On success or error code
+ */
+static int32 ds2431_memWrite( LL_HANDLE *llHdl,
+						 u_int8 *buf,
+						 u_int16 offs,
+						 u_int16 numBytes )
+{
+	int32 error = ERR_SUCCESS;
+	u_int16 bWritten = 0;
+	u_int16 bAddr = offs;
+	u_int16 bLen = numBytes;
+	u_int8 cpLen = 0;
+	u_int8 rBuf[Z72_OWB_DS2431_SCP_SIZE];
+
+	DBGWRT_1((DBH, "LL - Z72_OWB ds2431_memWrite offset=0x%04x; size=0x%04x\n", offs, numBytes));
+	
+	if( (offs + numBytes) > llHdl->eeHdl.memSize || numBytes == 0 )
+		return ERR_LL_ILL_PARAM;
+
+	/* only full scratchpad pages can be written.  *
+	 * align data with data from memory!           */
+	do{
+		if( bAddr & Z72_OWB_DS2431_SCP_MASK ||
+			bLen < Z72_OWB_DS2431_SCP_SIZE ){
+			/* read memory to stuff data around data to write */
+			error = llHdl->eeHdl.memRead( llHdl, rBuf, (bAddr & ~Z72_OWB_DS2431_SCP_MASK), Z72_OWB_DS2431_SCP_SIZE );
+			if( error != ERR_SUCCESS )
+				goto CLEANUP;
+			
+			/* copy over read data, up to SCP boundary or max. bLen */
+			cpLen = Z72_OWB_DS2431_SCP_SIZE - (bAddr & Z72_OWB_DS2431_SCP_MASK);
+			if (cpLen > bLen)
+				cpLen = bLen;
+			memcpy(&rBuf[bAddr & Z72_OWB_DS2431_SCP_MASK], buf, cpLen );
+
+			error = ds2431_scpWrite(llHdl, rBuf, (bAddr & ~Z72_OWB_DS2431_SCP_MASK));
+			if( error != ERR_SUCCESS )
+				goto CLEANUP;
+			
+		} else {
+			/* copy full scratch pad size */
+			error = ds2431_scpWrite(llHdl, buf, bAddr);
+			cpLen = Z72_OWB_DS2431_SCP_SIZE;
+			if( error != ERR_SUCCESS )
+				goto CLEANUP;
+		}
+		DBGWRT_4((DBH, "LL - Z72_OWB ds2431_memWrite bAddr=0x%04x; cpLen=0x%04x\n", bAddr, cpLen));
+
+		buf += cpLen;
+		bLen -= cpLen;
+		bAddr += cpLen;
+		bWritten += cpLen;
+	} while ( bWritten < numBytes && error == ERR_SUCCESS );
+	
+CLEANUP:
+	DBGWRT_2((DBH, "LL - Z72_OWB ds2431_memWrite finish (error = 0x%04x)\n",error));
+	masterTxReset( llHdl );
+	return error;
+}
 
 
