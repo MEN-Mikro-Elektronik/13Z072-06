@@ -102,7 +102,7 @@ static void usage(void)
 				"                 7: write memory section (random data)\n"
 				"   [-p]          use polling mode (irq mode is default)\n"
 				"   [-o=<offset>] offset in memory for read/write, aligned to 0x%04x\n"
-				"   [-s=<size>]   size of memory to read/write\n");
+				"   [-s=<size>]   size of memory to read/write\n", Z72_OWB_DS2431_SCP_SIZE);
 
     printf("\n");
     printf("Copyright 2010-2019, by MEN Mikro Elektronik GmbH\n");
