@@ -50,8 +50,8 @@ static int32 Z72_Init(DESC_SPEC *descSpec, OSS_HANDLE *osHdl,
 static int32 Z72_Exit(LL_HANDLE **llHdlP );
 static int32 Z72_Read(LL_HANDLE *llHdl, int32 ch, int32 *value);
 static int32 Z72_Write(LL_HANDLE *llHdl, int32 ch, int32 value);
-static int32 Z72_SetStat(LL_HANDLE *llHdl,int32 ch, int32 code, INT32_OR_64 value32_or_64);
-static int32 Z72_GetStat(LL_HANDLE *llHdl, int32 ch, int32 code, INT32_OR_64 *value32_or_64P);
+static int32 Z72_SetStat(LL_HANDLE *llHdl, int32 code, int32 ch, INT32_OR_64 value32_or_64);
+static int32 Z72_GetStat(LL_HANDLE *llHdl, int32 code, int32 ch, INT32_OR_64 *value32_or_64P);
 static int32 Z72_BlockRead(LL_HANDLE *llHdl, int32 ch, void *buf, int32 size,
 							int32 *nbrRdBytesP);
 static int32 Z72_BlockWrite(LL_HANDLE *llHdl, int32 ch, void *buf, int32 size,
@@ -226,7 +226,7 @@ static int32 Z72_Init(
 	if( value == 1 )
 		llHdl->mode |= Z72_MODE_AUTO_SKIPROM;
 
-	/* READ_RETRIES */
+	/* ACCESS_RETRIES */
 	if ((error = DESC_GetUInt32(llHdl->descHdl, Z72_OWB_RETRY,
 								&llHdl->retries, "ACCESS_RETRIES")) &&
 		error != ERR_DESC_KEY_NOTFOUND)
@@ -494,6 +494,10 @@ static int32 Z72_SetStat(
 						error = ERR_LL_ILL_PARAM;
 						break;
 					}
+					if( !llHdl->eeHdl.memWrite ) {
+						error = ERR_LL_ILL_FUNC;
+						break;
+					}
 					error = llHdl->eeHdl.memWrite( llHdl, (u_int8*)blk->data + 2,
 										 *(u_int16*)blk->data, (u_int16)blk->size-2 );
 					break;
@@ -617,6 +621,19 @@ static int32 Z72_GetStat(
 					return( error );
 			}
 			
+            switch (llHdl->eeHdl.familyCode)
+            {
+                case Z72_OWB_DS2502_FAM_CODE:
+                case Z72_OWB_DS2431_FAM_CODE:
+                    if (blk->size == Z72_OWB_READ_LEN_MAX)
+                    {
+                        blk->size = llHdl->eeHdl.memSize;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
 			switch(code)
 			{
 				/*--------------------------+
@@ -1128,11 +1145,11 @@ static int32 memRead( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_int16 numBy
 
 	DBGWRT_1((DBH, "LL - Z72_OWB memRead start=0x%04x len=0x%04x\n", offs, numBytes));
 
-	/* do Reset/Presence Pulse Cycle, wake up device */
-	if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
-		goto CLEANUP;
-
 	do {
+	    /* do Reset/Presence Pulse Cycle, wake up device */
+	    if( (error = owbGetToMemFkt( llHdl )) != ERR_SUCCESS )
+		    goto CLEANUP;
+
 		error = readMemory( llHdl, Z72_ACC_MEM_READ, rdBuf, offs, &rdNum );
 		/* compare the read data, max. rdNum bytes */
 		if( error == ERR_SUCCESS ) {
@@ -1281,8 +1298,7 @@ static int32 readMemory( LL_HANDLE *llHdl,
 
 		/* ready for CRC? check only DS2502 */
 		if( llHdl->eeHdl.familyCode == Z72_OWB_DS2502_FAM_CODE ) {
-			if( (accType == Z72_ACC_MEM_READ && !rdSize) ||
-				(accType == Z72_ACC_MEM_READ_CRC && !((rdIdx + offs + 1) % llHdl->eeHdl.memPageSize)) ||
+			if( (accType == Z72_ACC_MEM_READ_CRC && !((rdIdx + offs + 1) % llHdl->eeHdl.memPageSize)) ||
 				(accType == Z72_ACC_STA_READ && !rdSize) )
 			{
 				byteCrcFinish( &crc );
@@ -1601,7 +1617,7 @@ static int32 ds2502_memReadCrc( LL_HANDLE *llHdl, u_int8 *buf, u_int16 offs, u_i
 	
 }
 
-/*************************** ds2431_memWrite ********************************/
+/*************************** ds2431_scpWrite ********************************/
 /** Write content to OWB devices scratch pad, verify and copy to EEPROM
 *   Data must be aligned to scratchpad size already!
 *

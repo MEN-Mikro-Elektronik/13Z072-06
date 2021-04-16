@@ -88,7 +88,7 @@ static void usage(void)
 {
  
 		printf( "Syntax: z72_simp <device> [options]\n"
-				"Function: Z72 example reading a DS2502 ROM and memory region\n"
+				"Function: Z72 example reading (and writing) DS2502 or DS2431 ROM and memory region\n"
 				"    device       device name\n\n"
 				"Options:\n"
 				"   -f=<func>     function to perform:\n"
@@ -96,16 +96,16 @@ static void usage(void)
 				"                 1: read ROM section\n"
 				"                 2: read ROM and memory section\n"
 				"                 3: read memory section, auto skipRom\n"
-				"                 4: read memory & generate CRC\n"
-				"                 5: read status section\n"
-				"                 6: test auto skipRom function\n"
-				"                 7: write memory section (random data)\n"
+				"                 4: read memory & generate CRC (DS2502 only)\n"
+				"                 5: read status section (DS2502 only)\n"
+				"                 6: test auto skipRom function (obsolete)\n"
+				"                 7: write memory section (random data, DS2431 only)\n"
 				"   [-p]          use polling mode (irq mode is default)\n"
-				"   [-o=<offset>] offset in memory for read/write, aligned to 0x%04x\n"
-				"   [-s=<size>]   size of memory to read/write\n", Z72_OWB_DS2431_SCP_SIZE);
+				"   [-o=<offset>] offset in memory for read/write\n"
+				"   [-s=<size>]   size of memory to read/write\n");
 
     printf("\n");
-    printf("Copyright 2010-2019, by MEN Mikro Elektronik GmbH\n");
+    printf("Copyright 2010-2021, by MEN Mikro Elektronik GmbH\n");
 }
 /********************************* main ************************************/
 /** Program main function
@@ -246,34 +246,9 @@ int main(int argc, char *argv[])
 	|    test auto skipRom function    |
 	+---------------------------------*/
 	if( function == 6 ) {
-
-		*(u_int16*)memData = 0;
-
-	    msgBlk.data = memData;
-	    msgBlk.size = Z72_OWB_DS2502_MEM_SIZE;
-	    /* disable auto skipRom */
-	    printf("Auto skipRom Test:\nDisable auto skiprom, read memory\n");
-	    if( (error = M_setstat(path, Z72_ROM_SKIP_AUTOEN, 0)) ) {
-	    	PrintError("disable auto skipRom");
-	    	goto abort;
-	    }
-	    printf("Read memory (has to return with error)\n");
-	    if( (error = M_getstat(path, Z72_BLK_MEM, (int32 *)&msgBlk)) ) {
-	    	PrintError("read memory, this was expected (auto skipRom was disabled)");
-	    } else  {
-	    	PrintError("read memory worked, auto skipRom obsolete??");
-	    }
-	    /* enable auto skipRom */
-	    printf("Enable auto skiprom, read memory again:\n");
-	    if( (error = M_setstat(path, Z72_ROM_SKIP_AUTOEN, 1)) ) {
-	    	PrintError("enable auto skipRom");
-	    	goto abort;
-	    }
-		*(u_int16*)memData = 0;
-	    if( (error = M_getstat(path, Z72_BLK_MEM, (int32 *)&msgBlk)) ) {
-	    	PrintError("read memory");
-	    	goto abort;
-	    }
+	    /* test obsoleted */
+	    printf("Auto skipRom Test: obsoleted\n");
+	    goto abort;
     }
 
 	/*-----------------------------------------------------------+
