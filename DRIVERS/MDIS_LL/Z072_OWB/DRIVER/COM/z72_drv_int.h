@@ -52,6 +52,40 @@
 /*-----------------------------------------+
 |  TYPEDEFS                                |
 +-----------------------------------------*/
+
+/** OWB EEPROM access functions, partly device specific!		*/
+typedef struct
+{
+	/** ROM access functions */
+	int32 (*romRead)  ( void *llHdl, u_int8 *buf, u_int32 numBytes );
+	int32 (*romMatch) ( void *llHdl, u_int8 *rom );					
+	int32 (*romSearch)( void *llHdl, u_int8 *data, u_int32 *cnt );	
+	int32 (*romSkip)  ( void *llHdl );								
+	
+	/** Status functions (e.g. DS2502) */
+	int32 (*statusRead) (void *llHdl, u_int8 *data, u_int16 offs, u_int16 numBytes );
+	int32 (*statusWrite)(void *llHdl, u_int8 *data, u_int16 offs, u_int16 numBytes );
+	
+	/** memory access functions */
+	int32 (*memRead)   (void *llHdl, u_int8 *data, u_int16 offs, u_int16 numBytes );
+	int32 (*memReadCrc)(void *llHdl, u_int8 *data, u_int16 offs, u_int16 numBytes );
+	int32 (*memWrite)  (void *llHdl, u_int8 *data, u_int16 offs, u_int16 numBytes );
+	
+	 /* Reserved function pointers */
+	int32 ( *ReservedFctP1)( void );
+	int32 ( *ReservedFctP2)( void );
+	int32 ( *ReservedFctP3)( void );
+	int32 ( *ReservedFctP4)( void );
+
+	/** device specific information */
+	int8	familyCode; 	/**< just remember me */
+	int16	memSize;		/**< for common memRead() memory read function */
+	int8	memPageSize;	/**< for common memRead() memory read function */
+	int32 	tProg;			/**< memory programming time */
+
+	int32 	Reserved1[3];	/**< Reserved */
+}OWB_EE_HANDLE;
+
 /** low-level handle */
 typedef struct {
 	/* general */
@@ -67,6 +101,7 @@ typedef struct {
 	/* misc */
 	u_int32			mode;		    /**< mode used (irq/polled) */
 	u_int32         irqCount;       /**< Interrupt counter */
+	u_int32			retries;	/**< read retries on error */
 	u_int32			exeStatus;		/**< status of last executed cmd */
 	OSS_SEM_HANDLE  *exeSem;        /**< command ready */
 	OSS_SEM_HANDLE	*devSemHdl;		/**< device semaphore */
@@ -74,7 +109,9 @@ typedef struct {
 
 	/* state machines */
 	u_int32			majState;		/**< major state machine */
-	u_int32			fncState;		/**< single functions state machine */
+	
+	/* device access function pointers */
+	OWB_EE_HANDLE eeHdl;	
 } LL_HANDLE;
 
 
@@ -89,7 +126,7 @@ typedef struct {
 
 #define Z72_POLL_TOUT       1 		/**< timeout polled OWB access, msec */
 #define Z72_POLL_RETRY_MAX  3		/**< maximum retrys if bus still busy */
-#define Z72_SEM_TOUT        2 		/**< timeout irq based OWB access, msec */
+#define Z72_SEM_TOUT        10 		/**< timeout irq based OWB access, msec */
 
 #define Z72_RETRY_MAX       5		/**< maximum retrys if bus busy */
 
@@ -101,6 +138,7 @@ typedef struct {
 #else
 #	define DBG_MYLEVEL		DBG_ALL 			/**< Debug level all */
 #endif /* Z72_EXTRADBG */
+
 #define DBH					llHdl->dbgHdl		/**< Debug handle */
 
 #define OSH                 llHdl->osHdl		/**< OSS handle */
@@ -140,21 +178,22 @@ typedef struct {
  *  \anchor z72_drv_state_machines
  */
 /**@{*/
+/** ACC type controls */
+typedef enum {
+	Z72_ACC_ROM_READ,			/**< read ROM */
+	Z72_ACC_ROM_MATCH,			/**< match ROM */
+	Z72_ACC_ROM_SEARCH,			/**< search ROM */
+	Z72_ACC_MEM_READ,			/**< read data */
+	Z72_ACC_MEM_READ_CRC,		/**< read data & generate CRC */
+	Z72_ACC_MEM_WRITE,			/**< write data */
+	Z72_ACC_STA_READ,			/**< read status */
+	Z72_ACC_STA_WRITE,			/**< write status */
+} Z72_ACC_TYPE;
+
 /** major state machine */
 typedef enum {
 	Z72_ST_MAJ_IDLE = 0,			/**< IDLE state */
-	Z72_ST_MAJ_RP_PP,				/**< send Reset get Present Pulse */
-	Z72_ST_MAJ_ROM_SKIP,			/**< skip ROM */
-	Z72_ST_MAJ_ROM_READ,			/**< read ROM */
-	Z72_ST_MAJ_ROM_MATCH,			/**< match ROM */
-	Z72_ST_MAJ_ROM_SEARCH,			/**< search ROM */
 	Z72_ST_MAJ_IDLE_MEM,			/**< IDLE state after succ. ROM function */
-	Z72_ST_MAJ_MEM_READ,			/**< read data */
-	Z72_ST_MAJ_MEM_READ_CRC,		/**< read data & generate CRC */
-	Z72_ST_MAJ_MEM_WRITE,			/**< write data */
-	Z72_ST_MAJ_STATUS_READ,			/**< read status */
-	Z72_ST_MAJ_STATUS_WRITE,		/**< write status */
-	Z72_ST_MAJ_END					/**< send Reset Pulse */
 } Z72_STATE_MAJOR;
 
 
@@ -196,18 +235,30 @@ typedef enum {
 #define Z72_OWB_ROMCRC_POLY		0x31    /**< polynome of CRC used by OWB	*/
 #define Z72_OWB_ROMCRC_INIT		0x00	/**< init value of CRC used by OWB	*/
 
-/** common OWB commands */
+/** common OWB commands/parameters */
 #define Z72_OWB_ROM_READ 	0x33	/**< Read ROM command 				*/
 #define Z72_OWB_ROM_MATCH 	0x55	/**< Match ROM command 				*/
 #define Z72_OWB_ROM_SEARCH 	0xF0	/**< Search ROM command 			*/
 #define Z72_OWB_ROM_SKIP 	0xCC	/**< Skip ROM command 				*/
+#define Z72_OWB_MEM_READ 	0xF0 	/**< Read memory command 			*/
+
+#define Z72_OWB_RETRY		10		/**< maximum number of retries		*/
 
 /** commands of DS2502 */
-#define Z72_OWB_DS2502_MEM_READ 	0xF0 /**< Read memory command 			*/
 #define Z72_OWB_DS2502_MEM_READ_CRC	0xC3 /**< Read memory & gen. CRC command */
 #define Z72_OWB_DS2502_MEM_WRITE 	0x0F /**< Write memory command 			*/
 #define Z72_OWB_DS2502_STATUS_READ 	0xAA /**< Read status command 			*/
 #define Z72_OWB_DS2502_STATUS_WRITE	0x55 /**< Write status command 			*/
+/**@}*/
+
+/** commands of DS2431 */
+#define Z72_OWB_DS2431_MEM_READ 	0xF0 /**< Read memory command 			*/
+#define Z72_OWB_DS2431_SCP_WRITE 	0x0F /**< Write scratchpad  			*/
+#define Z72_OWB_DS2431_SCP_READ		0xAA /**< Read scratchpad				*/
+#define Z72_OWB_DS2431_SCP_COPY 	0x55 /**< Copy scratchpad	 			*/
+
+#define Z72_OWB_DS2431_TPROG		12	/**< Programming time in msec       */
+
 /**@}*/
 
 #ifdef __cplusplus

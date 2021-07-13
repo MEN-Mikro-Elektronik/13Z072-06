@@ -2,8 +2,8 @@
 <package xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="packagedesc.xsd">
 	<name>13z07206</name>
 	<description>MDIS5 driver package for MEN Z72 OneWireBus controller driver</description>
-	<date>2018-01-23</date>
-	<revision>1.4</revision>
+	<date>2021-04-16</date>
+	<revision>1.6.b1</revision>
 	<docroot>DRIVERS/MDIS_LL/Z072_OWB/DOC/html/index.html</docroot>
 	<modellist>
 		<model>
