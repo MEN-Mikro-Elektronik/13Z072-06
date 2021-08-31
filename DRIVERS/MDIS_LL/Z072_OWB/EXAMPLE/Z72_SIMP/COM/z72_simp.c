@@ -46,7 +46,9 @@
 #include <MEN/mdis_api.h>
 #include <MEN/z72_drv.h>
 
+/*Not used
 static const char IdentString[]=MENT_XSTR(MAK_REVISION);
+*/
 
 /*--------------------------------------+
 |   DEFINES                             |
@@ -152,12 +154,14 @@ int main(int argc, char *argv[])
     function  = ((str = UTL_TSTOPT("f=")) ? atoi(str) : 0);
     mode      = !!UTL_TSTOPT("p");
 
-    if( (str = UTL_TSTOPT("o=")) )
+    if ((str = UTL_TSTOPT("o="))) {
         offset = strtol(str, NULL, 16);
-    if( (str = UTL_TSTOPT("s=")) )
+	}
+    if ((str = UTL_TSTOPT("s="))) {
         size = strtol(str, NULL, 16);
+	}
 
-	if( (offset+size) > Z72_OWB_READ_LEN_MAX ) {
+	if ((offset+size) > Z72_OWB_READ_LEN_MAX) {
 		printf("offset and size in memory too large (0x%04x/0x%04x). Sum may not be larger than 0x%08x\n", offset, size, Z72_OWB_READ_LEN_MAX);
 		return(1);
 	}
