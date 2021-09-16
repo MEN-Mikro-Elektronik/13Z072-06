@@ -30,12 +30,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef _LL_DRV_
-  #include <linux/string.h>
-#else
-  #include <string.h>
-#endif
-
 #include "z72_drv_int.h"	/* Z72 driver internal header file */
 
 static const char IdentString[]=MENT_XSTR(MAK_REVISION);

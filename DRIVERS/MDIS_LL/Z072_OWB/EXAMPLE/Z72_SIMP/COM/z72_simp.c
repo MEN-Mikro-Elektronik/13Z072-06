@@ -46,10 +46,6 @@
 #include <MEN/mdis_api.h>
 #include <MEN/z72_drv.h>
 
-/*Not used
-static const char IdentString[]=MENT_XSTR(MAK_REVISION);
-*/
-
 /*--------------------------------------+
 |   DEFINES                             |
 +--------------------------------------*/
